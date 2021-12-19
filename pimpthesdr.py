@@ -9,7 +9,7 @@ sys.path.append('./core')
 sys.path.append('./utils')
 
 from cmd2 import Cmd
-from utils import etfbanners
+from utils import fdlbanners
 from AirCommunicator.aircommunicator import AirCommunicator
 from AirCommunicator.aircracker import WPAHandshake, WEPDataFile, CaffeLatteDataFile
 from AuxiliaryModules.aplauncher import Client
@@ -20,7 +20,7 @@ from SessionManager.sessionmanager import SessionManager, Session
 from utils.wifiutils import AccessPoint, WiFiClient, ProbeInfo
 
 
-class ETFConsole(Cmd):
+class FDLConsole(Cmd):
 
     def __init__(self, history = []):
         # Super for "old style" class
@@ -33,7 +33,7 @@ class ETFConsole(Cmd):
         self.configmanager = ConfigurationManager("core/ConfigurationManager/fdl.conf")
         self.configs = self.configmanager.config
         self.aircommunicator = AirCommunicator(self.configs["fdl"]["aircommunicator"])
-        self.etfitm          = EvilInTheMiddle(self.configs["fdl"]["mitmproxy"])
+        self.fdlitm          = EvilInTheMiddle(self.configs["fdl"]["mitmproxy"])
         self.spawnmanager    = SpawnManager(self.configs["fdl"]["spawner"])
 
         # Static strings to help with autocompletion
@@ -475,8 +475,8 @@ class ETFConsole(Cmd):
             print "[-] Something is wrong with the configuration of mitmproxy:\n", e
             return
 
-        self.etfitm.pass_config(listen_host, listen_port, ssl, client_cert, certs, mitm_plugins)
-        self.etfitm.start()
+        self.fdlitm.pass_config(listen_host, listen_port, ssl, client_cert, certs, mitm_plugins)
+        self.fdlitm.start()
 
     def do_stop(self, args):
         args = args.split()
@@ -485,7 +485,7 @@ class ETFConsole(Cmd):
             if "air" in service:
                 self.aircommunicator.service(service, "stop")
             elif service == "mitmproxy":
-                self.etfitm.stop()
+                self.fdlitm.stop()
 
     def complete_start(self, text, line, begidx, endidx):
         return self._complete_basic(line, text)
@@ -606,7 +606,7 @@ class ETFConsole(Cmd):
         SessionManager().load_session(index)
 
     def update_prompt(self):
-        self.prompt = "ETF{mode_start}{mode}{mode_end}::> ".format( mode_start = colored("[", "cyan"),
+        self.prompt = "FDL{mode_start}{mode}{mode_end}::> ".format( mode_start = colored("[", "cyan"),
                                                                     mode = colored(console.config_mode_string, "green"),
                                                                     mode_end = colored("]", "cyan"))
 
@@ -614,7 +614,7 @@ class ETFConsole(Cmd):
         print "[+] Stopping all air communications"
         self.aircommunicator.stop_air_communications(True, True, True)
         self.aircommunicator.network_manager.cleanup()
-        self.etfitm.stop()
+        self.fdlitm.stop()
         self.spawnmanager.restore_all()
         print "Closing Session..."
         SessionManager().close_session()
@@ -631,7 +631,7 @@ class ETFConsole(Cmd):
             SessionManager().log_command(complete_line)
 
 if __name__ == '__main__':
-    print etfbanners.get_banner()
+    print fdlbanners.get_banner()
 
     if os.geteuid() != 0:
         print "[-] You can't handle this yet."
@@ -642,7 +642,7 @@ if __name__ == '__main__':
     session_manager.session_prompt()
 
     # Load console interface (loads info according to session)
-    console = ETFConsole(session_manager.get_command_history())
+    console = FDLConsole(session_manager.get_command_history())
     console.update_prompt()
 
     try:
